@@ -1,0 +1,79 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>ImageryLayer - server side raster function | Sample | ArcGIS Maps SDK for JavaScript 4.28</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.28/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+<script>
+  require([
+    "esri/Map",
+    "esri/views/MapView",
+    "esri/layers/ImageryLayer",
+    "esri/layers/support/RasterFunction",
+    "esri/layers/support/rasterFunctionUtils"
+  ], (Map, MapView, ImageryLayer, RasterFunction, rasterFunctionUtils) => {
+    // Set up popup template of image layer
+    const imagePopupTemplate = {
+      title: "Data from {SensorName} satellite",
+      content: `
+        Rendered RGB values: <b>{Raster.ServicePixelValue} </b>
+        <br>Original values (Red, NIR): <b>{Raster.ItemPixelValue} </b>
+      `
+    };
+
+    // Create image layer with server-defined raster function templates
+    const ndvi = rasterFunctionUtils.bandArithmeticNDVI({
+      nirBandId: 5, // Landsat 8 NIR band index
+      redBandId: 4, // Landsat 8 Red band index
+      scientificOutput: false
+    });
+
+    const colormap = rasterFunctionUtils.colormap({
+      colorRampName: "NDVI3",
+      raster: ndvi
+    });
+
+    const layer = new ImageryLayer({
+      url: "https://landsat2.arcgis.com/arcgis/rest/services/Landsat8_Views/ImageServer",
+      rasterFunction: colormap,
+      popupTemplate: imagePopupTemplate
+    });
+
+    // Add image layer to map
+    const map = new Map({
+      basemap: "hybrid",
+      layers: [layer]
+    });
+
+    // Set the center and zoom for the Midwest region
+    const view = new MapView({
+      container: "viewDiv",
+      map: map,
+      center: [-93.5, 41.5], // Center coordinates for the Midwest region
+      zoom: 5, // Adjust the zoom level as needed
+      popup: {
+        actions: []
+      }
+    });
+  });
+</script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
